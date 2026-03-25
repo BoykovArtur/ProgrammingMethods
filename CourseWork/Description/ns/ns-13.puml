@@ -1,0 +1,50 @@
+@startuml
+title "Негативный сценарий 13. Модуль заряда / Самодиагностика. Нарушение ЦБ-1, ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "3. Модуль заряда" as charge #red
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag #red
+
+group Получение задачи и транспортировка
+wms -> conn: команда доставки
+conn -> ctrl: задача
+ctrl <- charge: статус заряда
+ctrl <- diag: состояние подсистем
+ctrl -> ctrl: «заряда достаточно»
+ctrl -> grip: захват стеллажа
+grip -> ctrl: захват выполнен
+ctrl -> move: движение к станции
+move -> move: везёт груз по проходу
+end
+
+group #red Критический разряд батареи
+charge -[#red]> charge: неправильно оценил\nостаток заряда
+diag <- charge: опрос батареи
+diag -[#red]> ctrl: «заряд в норме»
+charge -> charge: батарея разряжается критически
+ctrl <- charge: сигнал низкого заряда
+ctrl -> ctrl: аварийная остановка
+ctrl -> move: остановка на месте
+move -> move: **ОСТАНОВКА В ПРОХОДЕ**
+note over charge, diag
+  Модуль заряда или самодиагностика
+  неверно оценила остаток заряда.
+  Маршрут не предусматривал
+  резерв для аварийной остановки.
+end note
+end
+
+note over charge, move #FFCCCC
+  Груз в нештатной позиции.
+  Проход заблокирован — затор.
+  Нарушение ЦБ-1, ЦБ-4, ЦБ-5.
+end note
+
+@enduml

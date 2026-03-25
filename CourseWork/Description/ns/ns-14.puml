@@ -1,0 +1,45 @@
+@startuml
+title "Негативный сценарий 14. Несанкционированный физический доступ. Нарушение ЦБ-2, ЦБ-3, ЦБ-1, ЦБ-4, ЦБ-5, ЦБ-6, ЦБ-7"
+
+autonumber
+participant "Злоумышленник" as attacker
+participant "Локальный\nинтерфейс" as local #red
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "4. Система\nзахвата" as grip
+participant "7. Система\nпередвижения" as move
+participant "5. Система координации" as qr
+participant "8. WMS" as wms
+
+group Физический доступ
+attacker -> attacker: обход охраны\n(склад в нерабочее время)
+attacker -> local: подключение к порту\nотладки / снятие панели
+note over attacker, local
+  Локальный интерфейс, порт отладки
+  или снятие панели робота.
+end note
+end
+
+group #red Вмешательство в работу
+attacker -[#red]> local: изменение конфигурации
+attacker -[#red]> local: загрузка вредоносного ПО
+local -[#red]> ctrl: принудительный запуск
+local -[#red]> ctrl: команда на сброс стеллажа
+local -[#red]> ctrl: команда на взаимодействие\nс чужим стеллажом
+local -[#red]> ctrl: неверный маршрут
+end
+
+group Выполнение неавторизованных действий
+ctrl -> move: движение по неверному маршруту
+ctrl -> grip: сброс / захват неверного стеллажа
+ctrl -> ctrl: игнорирование команд WMS
+conn -> wms: статус (подмена)
+end
+
+note over attacker, wms #FFCCCC
+  Несанкционированный доступ к системе.
+  Выполнение неавторизованных команд.
+  Нарушение ЦБ-2, ЦБ-3, ЦБ-1, ЦБ-4, ЦБ-5, ЦБ-6, ЦБ-7.
+end note
+
+@enduml

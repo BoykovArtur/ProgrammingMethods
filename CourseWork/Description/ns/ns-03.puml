@@ -1,0 +1,46 @@
+@startuml
+title "Негативный сценарий 3. WMS. Нарушение ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms #red
+participant "1. Связь\n(робот 1)" as conn1
+participant "1. Связь\n(робот 2)" as conn2
+participant "2. Система управления\n(робот 1)" as ctrl1
+participant "2. Система управления\n(робот 2)" as ctrl2
+participant "5. QR-координация" as qr
+participant "6. Лидары" as lidar
+participant "7. Система передвижения" as move
+
+group WMS выдаёт маршруты
+wms -[#red]> conn1: маршрут по проходу A→B
+wms -[#red]> conn2: маршрут по проходу B→A
+note over wms
+  Конфликтующие маршруты:
+  оба робота в одном проходе
+  во встречных направлениях
+end note
+end
+
+group Робот 1: движение
+conn1 -> ctrl1: задача
+ctrl1 <- qr: координаты
+ctrl1 <- lidar: «путь свободен»
+ctrl1 -> move: движение вперёд
+end
+
+group Робот 2: движение
+conn2 -> ctrl2: задача
+ctrl2 <- qr: координаты
+ctrl2 <- lidar: «путь свободен»
+ctrl2 -> move: движение навстречу
+end
+
+move -> move: **ЛОБОВОЕ СТОЛКНОВЕНИЕ**
+
+note over wms, move #FFCCCC
+  WMS не учёл пересечение маршрутов.
+  Оба робота считали путь свободным.
+  Нарушение ЦБ-4, ЦБ-5.
+end note
+
+@enduml

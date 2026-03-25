@@ -1,0 +1,39 @@
+@startuml
+title "Негативный сценарий 12. Связь (атака). Нарушение ЦБ-2, ЦБ-3, ЦБ-1, ЦБ-4, ЦБ-5, ЦБ-6, ЦБ-7"
+
+autonumber
+participant "Злоумышленник" as attacker
+participant "8. WMS" as wms
+participant "1. Связь" as conn #red
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+
+group Нормальный обмен
+wms -> conn: легитимные команды
+conn -> ctrl: задачи, маршруты
+end
+
+group #red Атака на канал связи
+attacker -> attacker: перехват / подмена трафика
+attacker -[#red]> conn: вредоносная команда
+note over attacker, conn
+  Канал связи не защищён.
+  Подмена: сброс стеллажа, неверный
+  маршрут, взаимодействие с чужим стеллажом.
+end note
+conn -[#red]> ctrl: неавторизованная команда
+ctrl -[#red]> ctrl: исполнение команды
+ctrl -[#red]> move: движение по неверному маршруту
+ctrl -[#red]> grip: сброс / захват неверного стеллажа
+end
+
+note over conn, grip #FFCCCC
+  Робот выполнил вредоносную команду.
+  Несанкционированный доступ к системе.
+  Нарушение всех ЦБ.
+end note
+
+@enduml

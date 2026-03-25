@@ -1,0 +1,47 @@
+@startuml
+title "Негативный сценарий 6. Падение стеллажа при столкновении. Нарушение ЦБ-1, ЦБ-4, ЦБ-7"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+
+group Нормальная транспортировка
+wms -> conn: команда доставки
+conn -> ctrl: задача
+ctrl -> grip: захват стеллажа
+grip -> ctrl: захват выполнен
+ctrl -> move: движение к станции
+move -> move: везёт стеллаж
+ctrl <- qr: координаты
+ctrl <- lidar: расстояние
+end
+
+group Столкновение (НС-3, НС-4 или др.)
+note over ctrl, move
+  Столкновение: с другим роботом,
+  препятствием, объектом инфраструктуры.
+  Причина: WMS, Лидары, Самодиагностика.
+end note
+move -> move: **СТОЛКНОВЕНИЕ**
+move -> grip: удар, инерция
+end
+
+group #red Падение стеллажа
+grip -> grip: фиксация нарушена
+grip -> grip: стеллаж смещается
+grip -> grip: **СТЕЛЛАЖ ВЫПАДАЕТ**
+grip -> grip: падение на пол
+end
+
+note over ctrl, grip #FFCCCC
+  Груз оказался на полу (неавторизованная секция).
+  Стеллаж и груз повреждены.
+  Нарушение ЦБ-1, ЦБ-4, ЦБ-7.
+end note
+
+@enduml
