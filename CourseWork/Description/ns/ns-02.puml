@@ -5,7 +5,7 @@ autonumber
 participant "8. WMS" as wms
 participant "1. Связь" as conn
 participant "2. Система\nуправления\nроботом" as ctrl
-participant "5. Система координации\n(QR-коды)" as qr #red
+participant "5. Система координации\n(QR-коды)" as qr
 participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
 participant "7. Система\nпередвижения" as move
 participant "4. Система\nзахвата" as grip
@@ -26,16 +26,16 @@ ctrl <- qr: следование по маршруту
 ctrl <- lidar: расстояние до препятствий
 end
 
-group #red Прибытие на станцию
-ctrl <- qr: считать QR-код точки выгрузки
 qr -[#red]> qr: QR-код считан с ошибкой
 qr -[#red]> ctrl: неверные координаты
+
+group #red Прибытие на станцию
 note over qr
   Робот подъехал к неверной точке.
   Движется в сторону оператора
   вместо штатной зоны выгрузки.
 end note
-ctrl -[#red]> move: движение к неверной точке
+ctrl -> move: движение к неверной точке
 move -> operator: **СТОЛКНОВЕНИЕ**
 end
 
@@ -43,5 +43,4 @@ note over qr, operator #FFCCCC
   Некорректный маршрут/позиционирование.
   Нарушение ЦБ-4, ЦБ-5.
 end note
-
 @enduml
