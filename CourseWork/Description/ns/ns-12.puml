@@ -16,7 +16,7 @@ wms -> conn: легитимные команды
 conn -> ctrl: задачи, маршруты
 end
 
-group #red Атака на канал связи
+group Атака на канал связи
 attacker -> attacker: перехват / подмена трафика
 attacker -[#red]> conn: вредоносная команда
 note over attacker, conn
@@ -35,5 +35,4 @@ note over conn, grip #FFCCCC
   Несанкционированный доступ к системе.
   Нарушение всех ЦБ.
 end note
-
 @enduml
