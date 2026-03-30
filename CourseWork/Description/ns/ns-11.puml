@@ -1,11 +1,11 @@
 @startuml
-title "Негативный сценарий 11. Связь. Нарушение ЦБ-1, ЦБ-3, ЦБ-5"
+title "Негативный сценарий 11. Связь/Координация. Нарушение ЦБ-1, ЦБ-3, ЦБ-5"
 
 autonumber
 participant "8. WMS" as wms
 participant "1. Связь" as conn #red
 participant "2. Система\nуправления\nроботом" as ctrl
-participant "5. Система координации\n(QR-коды)" as qr
+participant "5. Система координации\n(QR-коды)" as qr #red
 participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
 participant "7. Система\nпередвижения" as move
 participant "4. Система\nзахвата" as grip
@@ -22,7 +22,7 @@ end
 
 group Движение по неверному маршруту
 ctrl -> ctrl: расчёт маршрута
-ctrl <- qr: координаты (некорректные)
+ctrl <[#red]- qr: координаты (некорректные)
 ctrl <- lidar: расстояние
 ctrl -> move: движение
 ctrl -> grip: захват стеллажа
