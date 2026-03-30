@@ -19,7 +19,7 @@ ctrl -> move: движение к станции
 move -> operator: стеллаж доставлен
 end
 
-group #red Комплектация заказа
+group Комплектация заказа
 operator -> wms: запрос: из какой ячейки взять товар
 wms -[#red]> operator: неверная ячейка
 note over wms
@@ -39,5 +39,4 @@ note over wms, shelf #FFCCCC
   Товар «потерян», груз не в той ячейке.
   Нарушение ЦБ-1.
 end note
-
 @enduml
