@@ -26,9 +26,10 @@ ctrl -> move: движение к станции
 move -> move: везёт груз по проходу
 end
 
-group Сбой связи
 conn -[#red]> conn: связь прервана\n(Wi-Fi, сбой WMS)
 conn -[#red]> ctrl: нет связи с WMS
+
+group #red Сбой связи
 ctrl -> ctrl: «при потере связи — стоп»
 ctrl -> move: аварийная остановка
 move -> move: остановка в проходе
