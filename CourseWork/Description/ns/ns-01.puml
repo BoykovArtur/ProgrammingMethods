@@ -6,7 +6,7 @@ participant "8. WMS" as wms
 participant "1. Связь" as conn
 participant "2. Система\nуправления\nроботом" as ctrl
 participant "5. Система координации\n(QR-коды)" as qr
-participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar #red
 participant "7. Система\nпередвижения" as move
 participant "4. Система\nзахвата" as grip
 participant "9. Самодиагностика" as diag
