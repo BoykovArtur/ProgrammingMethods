@@ -26,7 +26,7 @@ ctrl -> move: движение к станции
 move -> move: везёт груз по проходу
 end
 
-group #red Сбой связи
+group Сбой связи
 conn -[#red]> conn: связь прервана\n(Wi-Fi, сбой WMS)
 conn -[#red]> ctrl: нет связи с WMS
 ctrl -> ctrl: «при потере связи — стоп»
@@ -43,5 +43,4 @@ note over conn, move #FFCCCC
   Другие роботы не могут объехать — затор.
   Нарушение ЦБ-1, ЦБ-4, ЦБ-5.
 end note
-
 @enduml
