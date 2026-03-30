@@ -20,7 +20,7 @@ note over attacker, local
 end note
 end
 
-group #red Вмешательство в работу
+group Вмешательство в работу
 attacker -[#red]> local: изменение конфигурации
 attacker -[#red]> local: загрузка вредоносного ПО
 local -[#red]> ctrl: принудительный запуск
@@ -33,7 +33,6 @@ group Выполнение неавторизованных действий
 ctrl -> move: движение по неверному маршруту
 ctrl -> grip: сброс / захват неверного стеллажа
 ctrl -> ctrl: игнорирование команд WMS
-conn -> wms: статус (подмена)
 end
 
 note over attacker, wms #FFCCCC
@@ -41,5 +40,4 @@ note over attacker, wms #FFCCCC
   Выполнение неавторизованных команд.
   Нарушение ЦБ-2, ЦБ-3, ЦБ-1, ЦБ-4, ЦБ-5, ЦБ-6, ЦБ-7.
 end note
-
 @enduml
