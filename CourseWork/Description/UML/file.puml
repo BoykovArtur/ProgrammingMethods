@@ -1,0 +1,72 @@
+@startuml
+Actor Оператор as operator
+
+autonumber
+participant "Модуль\n связи" as conn1
+participant "Модуль\n шифрования/ расшифрования" as conn2
+
+participant "Модуль\n обработки задания" as controlsys1
+participant "Оркестратор\n процесса доставки" as controlsys2
+participant "Система\n навигации" as controlsys3
+participant "Модуль\n аварийного торможения" as controlsys4
+participant "Модуль\n управления захватом" as controlsys5
+
+participant "Камеры" as navig1
+participant "Модуль\n распознавания QR-кода" as navig2
+participant "Модуль валидации\n считывания QR-кода" as navig3
+
+participant "Лидары" as lidar1
+participant "Модуль контроля\n состояния лидаров" as lidar2
+
+participant "Система\n передвижения" as servos
+
+participant "Модуль\n самодиагностики" as selfdiag
+
+participant "Контроллер\n зарядки" as battery1
+participant "Модуль контроля\n состояния зарядки" as battery2
+
+participant "Манипуляторы" as grabsys1
+participant "Модуль контроля\n захвата груза" as grabsys2
+
+operator -> conn1: запрос товаров \nили стеллажа
+conn1 -> conn2: запрос товаров \nили стеллажа
+conn2 -> controlsys1: задача доставки
+controlsys1 -> controlsys2: задача доставки
+
+controlsys2 -> controlsys3: координаты
+controlsys3 -> navig3: координаты
+controlsys3 -> lidar2: координаты
+navig1 -> navig2: фотографии
+navig2 -> navig3: координаты робота
+navig3 -> controlsys3: проверенные координаты робота
+navig3 -> controlsys4: проверенные координаты робота
+navig3 -> selfdiag: проверенные координаты робота
+lidar1 -> lidar2: расстояние до препятствий
+lidar2 -> controlsys3: данные о корректности работы лидаров
+lidar2 -> controlsys4: данные о корректности работы лидаров
+lidar2 -> selfdiag: данные о корректности работы лидаров
+controlsys3 -> controlsys2: данные о корректности местонахождения 
+
+controlsys2 -> controlsys4: запрос на передвижение/торможение
+controlsys4 -> servos: задача передвижения/ торможения
+servos -> controlsys4: сообщение о том, что дрон едет/ стоит
+servos -> selfdiag: сообщение о том, что дрон едет/ стоит
+
+controlsys2 -> controlsys5: запрос на захват стеллажа
+controlsys5 -> grabsys2: запрос на захват стеллажа
+grabsys2 -> grabsys1: команда захвата/ отпускания стеллажа
+grabsys1 -> grabsys2: данные о захвате/ отпускании стеллажа
+grabsys2 -> selfdiag: данные о корректности захвата груза
+
+battery1 -> battery2: данные о состоянии батареи
+battery2 -> controlsys2: данные о состоянии батареи
+battery2 -> selfdiag: данные о состоянии батареи
+
+selfdiag -> controlsys2: все данные валидирующие модулей
+
+controlsys2 -> controlsys1: данные о выполнении задания
+controlsys1 -> conn2: данные о выполнении задания
+conn2 -> conn1: данные о выполнении задания
+conn1 -> operator: данные о выполнении задания
+
+@enduml
