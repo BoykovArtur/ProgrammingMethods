@@ -531,3 +531,21 @@ def check_operation(event_id, details) -> bool:
     return {"src": src, "dst": dst} in policies
 ```
 
+## Запуск приложения и тестов
+
+### Запуск приложения
+
+см. [инструкцию по запуску](../README.md)
+
+### Запуск тестов
+
+_Предполагается, что в ходе подготовки рабочего места все системные пакеты были установлены._
+
+Запуск примера: открыть docker, открыть окно терминала в Visual Studio code, в папке с исходным кодом выполнить
+
+**docker compose up --build -d**
+
+запуск тестов:
+
+**python tests/test_policies.py**  
+**python -m pytest tests/test_robots.py -v**
