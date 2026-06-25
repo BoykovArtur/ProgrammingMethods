@@ -1,0 +1,46 @@
+@startuml
+title "Негативный сценарий 7. Связь / WMS. Нарушение ЦБ-3, ЦБ-6, ЦБ-7"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn #red
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag
+
+group Получение задачи
+wms -> conn: команда «привезти стеллаж X»
+conn -[#red]> conn: сбой / искажение данных
+note over conn
+  Неверные координаты переданы
+  (сбой в WMS или при передаче)
+end note
+conn -[#red]> ctrl: координаты стеллажа Y
+ctrl -> ctrl: расчёт маршрута к Y
+end
+
+group Движение и захват
+ctrl <- qr: координаты
+ctrl <- lidar: расстояние
+ctrl -> move: движение к координатам Y
+ctrl -> grip: захват стеллажа Y
+grip -> ctrl: захват выполнен
+end
+
+group Доставка неверного стеллажа
+ctrl -> move: движение к станции
+move -> move: везёт стеллаж Y
+ctrl -> conn: «доставка выполнена»
+conn -> wms: статус
+end
+
+note over conn, ctrl #FFCCCC
+  Робот привёз стеллаж Y вместо X.
+  Взаимодействовал с неверным стеллажом.
+  Нарушение ЦБ-3, ЦБ-6, ЦБ-7.
+end note
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+title "Негативный сценарий 2. Система координации (QR-коды). Нарушение ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr #red
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag
+participant "Оператор" as operator
+
+group Получение задачи и захват
+wms -> conn: команда «привезти стеллаж X»
+conn -> ctrl: задача доставки
+ctrl <- qr: координаты стеллажа
+ctrl -> grip: захват стеллажа
+grip -> ctrl: захват выполнен
+end
+
+group Движение к станции комплектации
+ctrl -> move: движение к станции
+ctrl <- qr: следование по маршруту
+ctrl <- lidar: расстояние до препятствий
+end
+
+qr -[#red]> qr: QR-код считан с ошибкой
+qr -[#red]> ctrl: неверные координаты
+
+group #red Прибытие на станцию
+note over qr
+  Робот подъехал к неверной точке.
+  Движется в сторону оператора
+  вместо штатной зоны выгрузки.
+end note
+ctrl -> move: движение к неверной точке
+move -> operator: **СТОЛКНОВЕНИЕ**
+end
+
+note over qr, operator #FFCCCC
+  Некорректный маршрут/позиционирование.
+  Нарушение ЦБ-4, ЦБ-5.
+end note
+@enduml

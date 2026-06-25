@@ -1,0 +1,75 @@
+@startuml
+autonumber
+participant "Система\nуправления\nскладом" as wms
+participant "Среда\nпередачи\nданных" as spd #red
+
+participant "Модуль\nсвязи" as conn #red
+participant "Модуль\nшифрования/\nрасшифрования" as cypher #orange
+
+participant "Модуль\nобработки\nзадания" as task_maker #green
+participant "Оркестратор\nпроцесса\nдоставки" as org
+participant "Система\nнавигации" as navigation
+participant "Модуль\nаварийного\nторможения" as brake
+participant "Модуль\nуправления\nзахватом" as grab_master
+
+participant "Камеры" as cameras
+participant "Модуль\nраспознавания\nQR-кода" as QR_detector
+participant "Модуль\nвалидации\nсчитывания\nQR-кода" as QR_check
+
+participant "Лидары" as lidars
+participant "Модуль\nконтроля\nсостояния\nлидаров" as lidars_check
+
+participant "Система\nпередвижения" as move
+
+participant "Модуль\nсамодиагностики" as selfdiag
+
+participant "Контроллер\nзарядки" as battery
+participant "Модуль\nконтроля\nсостояния\nзарядки" as battery_check
+
+participant "Манипуляторы" as grab
+participant "Модуль\nконтроля\nзахвата\nгруза" as grab_check
+
+wms -> spd: зашифрованный\nзапрос товаров\nили стеллажа
+spd -[#red]> conn: зашифрованный\nзапрос товаров\nили стеллажа\nс искажением
+conn -[#red]> cypher: зашифрованный\nзапрос товаров\nили стеллажа\nс искажением
+cypher -[#green]> task_maker: результат\nрасшифрования\n(некорректная\nинформация)
+task_maker -[#green]> task_maker: некорректная\nинформация\nне распознана,\nошибочное\nзадание\nне создано
+
+org -> navigation: запрос\nнавигационной\nинформации
+navigation -> QR_check: запрос текущих координат
+cameras -> QR_detector: фотографии
+QR_detector -> QR_check: координаты\nробота
+QR_check -> navigation: проверенные координаты робота
+QR_check -> brake: проверенные координаты робота и данные о\nработоспособности модуля распознавания QR-кодов
+QR_check -> selfdiag: проверенные координаты робота и данные о\nработоспособности модуля распознавания QR-кодов
+navigation -> lidars_check: запрос расстояний до ближайших объектов
+lidars -> lidars_check: расстояния\nдо\nпрепятствий
+lidars_check -> navigation: данные о расстояниях до ближайших объектов
+lidars_check -> brake: данные о работоспособности лидаров и расстояниях до ближайших объектов
+lidars_check -> selfdiag: данные о работоспособности\nлидаров и расстояниях\nдо ближайших объектов
+navigation -> org: навигационная\nинформация 
+
+battery -> battery_check: текущий\nзаряд\nбатареи
+battery_check -> brake: данные о состоянии заряда батареи
+battery_check -> selfdiag: данные о состоянии\nзаряда батареи
+
+org -> brake: запрос\nпередвижения/торможения
+brake -> move: команда на передвижение/торможение
+move -> brake: сообщение о том, что дрон едет/стоит
+move -> selfdiag: сообщение о\nтом, что дрон\nедет/стоит
+
+org -> grab_master: задание на захват/отпускание стеллажа
+grab_master -> grab_check: запрос на захват/отпускание стеллажа
+grab_check -> grab: команда\nзахвата/\nотпускания\nстеллажа
+grab -> grab_check: данные о\nзахвате/\nотпускании\nстеллажа
+grab_check -> selfdiag: данные о корректности захвата стеллажа
+
+selfdiag -> org: данные модулей
+
+org -> task_maker: статус\nвыполнения\nзадания
+task_maker -> cypher: статус\nвыполнения\nзадания
+cypher -> conn: зашифрованный\nстатус\nвыполнения\nзадания
+conn -> spd: зашифрованный\nстатус\nвыполнения\nзадания
+spd -> wms: зашифрованный\nстатус\nвыполнения\nзадания
+
+@enduml

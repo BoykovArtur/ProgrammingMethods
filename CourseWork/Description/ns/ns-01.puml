@@ -1,0 +1,49 @@
+@startuml
+title "Негативный сценарий 1. Лидары. Нарушение ЦБ-4"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar #red
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag
+participant "Сотрудник" as human
+
+group Получение задачи
+wms -> conn: команда «привезти стеллаж X»
+conn -> ctrl: задача доставки
+ctrl <- qr: текущие координаты
+ctrl <- diag: состояние подсистем
+ctrl -> ctrl: расчёт маршрута
+end
+
+group Движение к стеллажу
+ctrl -> move: параметры перемещения
+move -> move: выполнение
+ctrl <- qr: координаты
+ctrl <- lidar: расстояние до препятствий
+end
+
+group Захват и транспортировка
+ctrl -> grip: захват стеллажа
+grip -> ctrl: захват выполнен
+ctrl -> move: движение к станции
+end
+
+human -> human: вышел в проход
+ctrl <- qr: координаты
+ctrl <[#red]- lidar: ошибка - «путь свободен» 
+
+loop #red Транспортировка (сотрудник в проходе)
+note over lidar, human
+  Лидары не распознали человека
+  (блики, угол обзора, нестандартная поза)
+end note
+ctrl -> move: продолжить движение
+move -> move: движение
+move -> human: **СТОЛКНОВЕНИЕ**
+end
+@enduml

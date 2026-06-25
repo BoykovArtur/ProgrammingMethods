@@ -1,0 +1,38 @@
+@startuml
+title "Негативный сценарий 4. Лидары / Самодиагностика. Нарушение ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar #red
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag #red
+
+group Получение задачи
+wms -> conn: команда доставки
+conn -> ctrl: задача
+ctrl <- qr: координаты
+ctrl <- diag: состояние подсистем
+ctrl -> ctrl: расчёт маршрута
+lidar -[#red]> lidar: лидар вышел из строя
+diag <- lidar: опрос состояния
+diag -[#red]> diag: не обнаружила неисправность
+diag -[#red]> ctrl: ошибка - «все системы в норме»
+end
+
+group Движение без коррекции по лидарам
+ctrl -> move: движение к стеллажу
+ctrl <- qr: координаты (только QR-навигация)
+ctrl -> ctrl: полагается на QR без лидаров
+move -> move: дрейф из-за неточности QR
+move -> move: **НАЕЗД НА ПРЕПЯТСТВИЕ**\n(поддоны, тележка)
+end
+
+note over lidar, move #FFCCCC
+  Робот наехал на объект инфраструктуры.
+  Нарушение ЦБ-4, ЦБ-5.
+end note
+@enduml

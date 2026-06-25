@@ -1,0 +1,47 @@
+@startuml
+title "Негативный сценарий 9. WMS. Нарушение ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms #red
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+
+group WMS выдаёт маршруты нескольким роботам
+wms -> conn: дает команду роботам 1, 2, 3...
+ctrl -> ctrl: прокладывают маршрут 
+ctrl -> wms: отправляют маршрут на проверку
+wms -[#red]> ctrl: ошибка - "маршрут правильнный"
+note over wms
+  WMS не учёл пересечения траекторий.
+  Маршруты ведут в одну зону / проход.
+end note
+conn -> ctrl: задачи доставки
+end
+
+group Роботы выполняют задачи
+ctrl <- qr: координаты
+ctrl <- lidar: расстояние до препятствий
+ctrl -> move: движение по маршрутам
+end
+
+group #red Образование затора
+move -> move: робот 1: движение
+move -> move: робот 2: путь пересекается
+move -> move: роботы останавливаются\n(ожидание друг друга)
+move -> move: робот 3: путь заблокирован
+note over wms, move
+  Роботы друг перед другом.
+  Блокируют проход.
+  Стеллаж не доставлен вовремя.
+end note
+move -> move: **ЗАТОР**
+end
+
+note over wms, move #FFCCCC
+  Некорректное планирование маршрутов.
+  Нарушение ЦБ-4, ЦБ-5.
+end note
+@enduml

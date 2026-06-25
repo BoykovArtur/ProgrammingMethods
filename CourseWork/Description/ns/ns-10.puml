@@ -1,0 +1,47 @@
+@startuml
+title "Негативный сценарий 10. Связь. Нарушение ЦБ-1, ЦБ-4, ЦБ-5"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn #red
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip
+participant "9. Самодиагностика" as diag
+
+group Получение задачи
+wms -> conn: команда доставки
+conn -> ctrl: задача
+ctrl <- qr: координаты
+ctrl <- diag: состояние
+ctrl -> ctrl: расчёт маршрута
+end
+
+group Захват и начало транспортировки
+ctrl -> grip: захват стеллажа
+grip -> ctrl: захват выполнен
+ctrl -> move: движение к станции
+move -> move: везёт груз по проходу
+end
+
+conn -[#red]> conn: связь прервана\n(Wi-Fi, сбой WMS)
+conn -[#red]> ctrl: нет связи с WMS
+
+group #red Сбой связи
+ctrl -> ctrl: «при потере связи — стоп»
+ctrl -> move: аварийная остановка
+move -> move: остановка в проходе
+note over conn
+  Робот заблокировал проход.
+  Груз в нештатной позиции.
+end note
+end
+
+note over conn, move #FFCCCC
+  Маршрут привёл к блокирующей позиции.
+  Другие роботы не могут объехать — затор.
+  Нарушение ЦБ-1, ЦБ-4, ЦБ-5.
+end note
+@enduml

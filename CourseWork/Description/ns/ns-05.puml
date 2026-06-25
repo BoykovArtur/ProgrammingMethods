@@ -1,0 +1,44 @@
+@startuml
+title "Негативный сценарий 5. Система захвата. Нарушение ЦБ-1, ЦБ-7"
+
+autonumber
+participant "8. WMS" as wms
+participant "1. Связь" as conn
+participant "2. Система\nуправления\nроботом" as ctrl
+participant "5. Система координации\n(QR-коды)" as qr
+participant "6. Доп. система\nкоординации\n(Лидары)" as lidar
+participant "7. Система\nпередвижения" as move
+participant "4. Система\nзахвата" as grip #red
+participant "9. Самодиагностика" as diag
+
+group Получение задачи и движение к стеллажу
+wms -> conn: команда «привезти стеллаж X»
+conn -> ctrl: задача
+ctrl <- qr: координаты стеллажа
+ctrl -> move: движение к стеллажу
+ctrl <- lidar: корректировка положения
+end
+
+group Позиционирование и захват
+ctrl -> grip: выполнить захват
+grip -> grip: подъезд под стеллаж
+grip -[#red]> grip: неправильный захват\nнекорректные показания\n(неисправность)
+grip -[#red]> ctrl: «стеллаж зафиксирован»
+note over grip
+  Фактически захват не завершён.
+  Система ошибочно подтвердила фиксацию.
+end note
+end
+
+group Транспортировка
+ctrl -> move: движение к станции
+move -> move: везёт стеллаж
+grip -> grip: стеллаж соскальзывает
+grip -> grip: **ПАДЕНИЕ**
+end
+
+note over ctrl, grip #FFCCCC
+  Груз оказался на полу в проходе.
+  Нарушение ЦБ-1, ЦБ-7.
+end note
+@enduml
