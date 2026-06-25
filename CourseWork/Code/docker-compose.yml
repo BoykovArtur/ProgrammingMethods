@@ -1,0 +1,396 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  broker:
+    image: confluentinc/cp-kafka:7.2.0
+    container_name: broker
+    ports:
+      - "9092:9092"
+    expose:
+      - "29092"
+    depends_on:
+      - zookeeper
+    env_file: ./drone/modules/broker/config/.env
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.2.0
+    container_name: kafka-init
+    depends_on:
+      broker:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        echo "Waiting for Kafka broker..."
+        cub kafka-ready -b broker:9092 1 60
+        for topic in monitor wms communication encryption-decryption task-processing delivery-orchestrator navigation emergency-braking grip-control movement-system cameras qr-recognition qr-validation lidars lidar-control cargo-grip-control manipulators charging-controller charge-state-control self-diagnostic; do
+          echo "Creating topic $${topic}"
+          kafka-topics --create --if-not-exists --topic "$${topic}" --bootstrap-server broker:9092 --replication-factor 1 --partitions 1
+        done
+        echo "All Kafka topics are ready"
+    restart: "no"
+
+  monitor:
+    build: ./drone/modules/monitor
+    image: monitor
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: monitor
+    environment:
+      MODULE_NAME: monitor
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  wms:
+    build: ./wms
+    image: wms
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start_kafka.py /shared/config.ini
+    container_name: wms
+    environment:
+      MODULE_NAME: wms
+      MODULE_PORT: 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  drone:
+    build:
+      context: .
+      dockerfile: drone/Dockerfile
+    image: drone
+    container_name: drone
+    ports:
+      - "8000:8000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      KAFKA_ENABLED: "1"
+    volumes:
+      - ./drone/shared:/app/drone/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      wms:
+        condition: service_started
+
+  # --- Подсистема связи ---
+  communication:
+    build: ./drone/modules/communication
+    image: communication
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: communication
+    environment:
+      MODULE_NAME: communication
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  encryption:
+    build: ./drone/modules/encryption
+    image: encryption
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: encryption
+    environment:
+      MODULE_NAME: encryption-decryption
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  task_processing:
+    build: ./drone/modules/task_processing
+    image: task_processing
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: task_processing
+    environment:
+      MODULE_NAME: task-processing
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Центральная система управления ---
+  delivery_orchestrator:
+    build: ./drone/modules/delivery_orchestrator
+    image: delivery_orchestrator
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: delivery_orchestrator
+    environment:
+      MODULE_NAME: delivery-orchestrator
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  navigation:
+    build: ./drone/modules/navigation
+    image: navigation
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: navigation
+    environment:
+      MODULE_NAME: navigation
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  emergency_braking:
+    build: ./drone/modules/emergency_braking
+    image: emergency_braking
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: emergency_braking
+    environment:
+      MODULE_NAME: emergency-braking
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  grip_control:
+    build: ./drone/modules/grip_control
+    image: grip_control
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: grip_control
+    environment:
+      MODULE_NAME: grip-control
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  movement:
+    build: ./drone/modules/movement
+    image: movement
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: movement
+    environment:
+      MODULE_NAME: movement-system
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Подсистема координации (QR-коды) ---
+  cameras:
+    build: ./drone/modules/cameras
+    image: cameras
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: cameras
+    environment:
+      MODULE_NAME: cameras
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  qr_recognition:
+    build: ./drone/modules/qr_recognition
+    image: qr_recognition
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: qr_recognition
+    environment:
+      MODULE_NAME: qr-recognition
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  qr_validation:
+    build: ./drone/modules/qr_validation
+    image: qr_validation
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: qr_validation
+    environment:
+      MODULE_NAME: qr-validation
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Доп. подсистема координации (лидары) ---
+  lidars:
+    build: ./drone/modules/lidars
+    image: lidars
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: lidars
+    environment:
+      MODULE_NAME: lidars
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  lidar_status_control:
+    build: ./drone/modules/lidar_status_control
+    image: lidar_status_control
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: lidar_status_control
+    environment:
+      MODULE_NAME: lidar-control
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Подсистема захвата груза ---
+  cargo_grip_control:
+    build: ./drone/modules/cargo_grip_control
+    image: cargo_grip_control
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: cargo_grip_control
+    environment:
+      MODULE_NAME: cargo-grip-control
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  manipulators:
+    build: ./drone/modules/manipulators
+    image: manipulators
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: manipulators
+    environment:
+      MODULE_NAME: manipulators
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Подсистема зарядки ---
+  charging_controller:
+    build: ./drone/modules/charging_controller
+    image: charging_controller
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: charging_controller
+    environment:
+      MODULE_NAME: charging-controller
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  charge_state_control:
+    build: ./drone/modules/charge_state_control
+    image: charge_state_control
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: charge_state_control
+    environment:
+      MODULE_NAME: charge-state-control
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  # --- Подсистема самодиагностики ---
+  self_diagnostic:
+    build: ./drone/modules/self_diagnostic
+    image: self_diagnostic
+    entrypoint:
+      - bash
+      - -c
+      - venv/bin/python start.py /shared/config.ini
+    container_name: self_diagnostic
+    environment:
+      MODULE_NAME: self-diagnostic
+    volumes:
+      - ./drone/shared:/shared
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+volumes: {}
